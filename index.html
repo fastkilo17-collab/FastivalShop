@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>สมุดจองล็อค</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600;700&display=swap">
+<style>
+/* Layout: one narrow column built for a phone held in one hand.
+   Entry form on top of three tabs, a fixed save bar at the bottom, list and lock map behind the other tabs.
+   Colors follow the stall colors on a festival floor plan: magenta accent, amber / blue / green for booking state. */
+:root {
+  --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --font-display: "Prompt", "IBM Plex Sans Thai", system-ui, sans-serif;
+  --bg: #f1f2f7;
+  --surface: #ffffff;
+  --surface2: #e7e9f1;
+  --ink: #1b1f2e;
+  --muted: #596078;
+  --line: #d6d9e4;
+  --accent: #c2185b;
+  --accent-ink: #ffffff;
+  --book: #8a5700;
+  --book-bg: #fcecc6;
+  --dep: #1a56b0;
+  --dep-bg: #d9e7fb;
+  --paid: #17703d;
+  --paid-bg: #d3f0df;
+  --warn-bg: #fff0cf;
+  --warn-ink: #6b4300;
+  --danger: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141b; --surface: #1b1e28; --surface2: #262a37; --ink: #eceef6; --muted: #9aa2b8; --line: #333849;
+    --accent: #ff6aa6; --accent-ink: #2a0618;
+    --book: #f2c25b; --book-bg: #3a2d10; --dep: #8bb6ff; --dep-bg: #172a4a; --paid: #6fd69a; --paid-bg: #123222;
+    --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141b; --surface: #1b1e28; --surface2: #262a37; --ink: #eceef6; --muted: #9aa2b8; --line: #333849;
+  --accent: #ff6aa6; --accent-ink: #2a0618;
+  --book: #f2c25b; --book-bg: #3a2d10; --dep: #8bb6ff; --dep-bg: #172a4a; --paid: #6fd69a; --paid-bg: #123222;
+  --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body);
+  padding-block: 14px 130px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font: 600 24px/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
+.sync { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 4px 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sync[data-s="ok"] .dot { background: var(--paid); }
+.sync[data-s="busy"] .dot { background: var(--book); }
+.sync[data-s="err"] .dot { background: var(--danger); }
+
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface2); padding: 4px; border-radius: 14px; }
+.tab { border: 0; background: transparent; border-radius: 10px; min-height: 44px; font-weight: 500; color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.18); font-weight: 600; }
+
+form { display: flex; flex-direction: column; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.field > label, .lbl { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: .02em; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 460px) { .row2 { grid-template-columns: 1fr; } }
+input[type=text], input[type=tel], input[type=search], input[inputmode], select {
+  width: 100%; min-height: 48px; padding: 0 14px; font-size: 17px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; min-width: 0;
+}
+input::placeholder { color: var(--muted); opacity: .7; }
+.lock-input { font: 600 26px/1 var(--font-display); letter-spacing: .02em; min-height: 56px; }
+.price-wrap { position: relative; }
+.price-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 17px; pointer-events: none; }
+.price-wrap input { padding-left: 34px; font: 600 22px/1 var(--font-display); min-height: 54px; font-variant-numeric: tabular-nums; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 40px; padding: 0 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.chip.ghost { border-style: dashed; color: var(--muted); }
+.zones { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; }
+.zbtn { min-height: 50px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font: 600 19px/1 var(--font-display); }
+.zbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.zbtn.add { color: var(--muted); border-style: dashed; font-size: 22px; }
+.inline-add { display: flex; gap: 8px; }
+.inline-add input { flex: 1; }
+.btn { min-height: 48px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font: 600 18px/1 var(--font-display); }
+.btn.small { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.seg button { min-height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.seg button[aria-pressed="true"][data-st="book"] { background: var(--book-bg); color: var(--book); border-color: var(--book); font-weight: 600; }
+.seg button[aria-pressed="true"][data-st="dep"] { background: var(--dep-bg); color: var(--dep); border-color: var(--dep); font-weight: 600; }
+.seg button[aria-pressed="true"][data-st="paid"] { background: var(--paid-bg); color: var(--paid); border-color: var(--paid); font-weight: 600; }
+
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.editbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface2); border-radius: 10px; padding: 8px 8px 8px 14px; font-size: 14px; }
+.toggle { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; color: var(--muted); }
+.toggle input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+.savebar {
+  position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  z-index: 5;
+}
+.savebar .in { max-width: 720px; margin: 0 auto; display: flex; gap: 10px; }
+.savebar .primary { flex: 1; min-height: 54px; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 10px; font-size: 14px; z-index: 6;
+  max-width: calc(100% - 32px); pointer-events: none; text-align: center;
+}
+.toast[data-k="err"] { background: var(--danger); color: #fff; }
+
+.filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.filters .wide { grid-column: 1 / -1; }
+.scope { display: flex; gap: 8px; align-items: center; }
+.scope select { flex: 1; }
+.summary { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.summary div { display: flex; flex-direction: column; min-width: 0; }
+.summary b { font: 600 24px/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+.summary small { color: var(--muted); font-size: 12px; }
+.zonebars { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.zb { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; }
+.zb .bar { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
+.zb .bar i { display: block; height: 100%; background: var(--accent); border-radius: 5px; }
+.zb .num { font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card .top { display: flex; align-items: center; gap: 10px; }
+.badge { font: 700 20px/1 var(--font-display); background: var(--surface2); border-radius: 10px; padding: 8px 10px; white-space: nowrap; }
+.card .ev { color: var(--muted); font-size: 13px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.card .price { font: 600 20px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.card .what { overflow-wrap: anywhere; }
+.card .what .cat { display: inline-block; font-size: 12px; background: var(--surface2); border-radius: 12px; padding: 1px 10px; margin-right: 6px; }
+.card .who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; overflow-wrap: anywhere; }
+.card .meta { font-size: 12px; color: var(--muted); }
+.card .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pill { border: 1px solid transparent; border-radius: 16px; min-height: 36px; padding: 0 14px; font-size: 14px; font-weight: 600; }
+.pill[data-st="book"], .cell[data-st="book"], .key[data-st="book"] { background: var(--book-bg); color: var(--book); }
+.pill[data-st="dep"], .cell[data-st="dep"], .key[data-st="dep"] { background: var(--dep-bg); color: var(--dep); }
+.pill[data-st="paid"], .cell[data-st="paid"], .key[data-st="paid"] { background: var(--paid-bg); color: var(--paid); }
+.spacer { flex: 1; }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+
+.zgroup { display: flex; flex-direction: column; gap: 8px; }
+.zgroup h3 { margin: 0; font: 600 16px/1.3 var(--font-display); display: flex; justify-content: space-between; gap: 12px; }
+.zgroup h3 span { font: 400 13px var(--font-body); color: var(--muted); }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+.cell { min-height: 46px; border-radius: 8px; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); font: 600 16px/1 var(--font-display); }
+.legend { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.key { border-radius: 14px; padding: 2px 12px; font-weight: 500; }
+.empty { text-align: center; padding: 36px 16px; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.empty p { margin: 0; max-width: 34ch; }
+.empty strong { color: var(--ink); font: 600 17px var(--font-display); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>สมุดจองล็อค</h1>
+      <p class="sub">บันทึกล็อคขายของตามตลาดและงานเทศกาล ทุกคนเห็นข้อมูลเดียวกัน</p>
+    </div>
+    <span class="sync" id="sync" data-s="busy" role="status"><i class="dot"></i><span id="syncTxt">กำลังเชื่อมต่อ</span></span>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-form" data-tab="form" aria-selected="true">บันทึก</button>
+    <button class="tab" role="tab" id="tab-list" data-tab="list" aria-selected="false">รายการ <span id="cnt"></span></button>
+    <button class="tab" role="tab" id="tab-map" data-tab="map" aria-selected="false">ผังล็อค</button>
+  </div>
+
+  <div class="notice" id="roNote" hidden></div>
+
+  <!-- ===== บันทึก ===== -->
+  <section id="view-form" aria-labelledby="tab-form">
+    <form id="form" autocomplete="off">
+      <div class="editbar" id="editBar" hidden>
+        <span id="editTxt"></span>
+        <button type="button" class="btn small" id="cancelEdit">ยกเลิกแก้ไข</button>
+      </div>
+
+      <div class="field">
+        <label for="event">งาน</label>
+        <input type="text" id="event" placeholder="เช่น งานวัดประจำปี ตลาดนัดริมน้ำ" list="eventList" enterkeyhint="next">
+        <datalist id="eventList"></datalist>
+        <div class="chips" id="eventChips"></div>
+      </div>
+
+      <div class="field">
+        <span class="lbl" id="zoneLbl">โซน</span>
+        <div class="zones" id="zones" role="group" aria-labelledby="zoneLbl"></div>
+        <div class="inline-add" id="zoneAdd" hidden>
+          <input type="text" id="zoneNew" placeholder="ชื่อโซนใหม่ เช่น VIP" maxlength="12" aria-label="ชื่อโซนใหม่">
+          <button class="btn" type="button" id="zoneAddBtn">เพิ่ม</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="lock">เลขล็อค</label>
+        <input type="text" id="lock" class="lock-input" inputmode="numeric" placeholder="12" enterkeyhint="next" maxlength="12">
+        <div class="notice" id="dup" hidden></div>
+        <label class="toggle"><input type="checkbox" id="autoNext" checked> หลังบันทึก ขึ้นเลขล็อคถัดไปให้ (+1)</label>
+      </div>
+
+      <div class="field">
+        <label for="price">ราคาปิดประมูล (บาท)</label>
+        <div class="price-wrap"><span>฿</span><input type="text" id="price" inputmode="numeric" placeholder="0" enterkeyhint="next"></div>
+        <div class="chips" id="priceChips">
+          <button type="button" class="chip" data-add="100">+100</button>
+          <button type="button" class="chip" data-add="500">+500</button>
+          <button type="button" class="chip" data-add="1000">+1,000</button>
+          <button type="button" class="chip ghost" data-add="clear">ล้าง</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lbl" id="catLbl">ขายอะไร</span>
+        <div class="chips" id="cats" role="group" aria-labelledby="catLbl"></div>
+        <input type="text" id="product" placeholder="รายละเอียดเพิ่ม เช่น ไก่ทอด หมูปิ้ง เสื้อยืด" aria-label="รายละเอียดสินค้า" enterkeyhint="next">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="cname">ชื่อผู้ติดต่อ</label>
+          <input type="text" id="cname" placeholder="ชื่อ / ชื่อร้าน" enterkeyhint="next">
+        </div>
+        <div class="field">
+          <label for="phone">เบอร์โทร</label>
+          <input type="tel" id="phone" inputmode="tel" placeholder="08x-xxx-xxxx" enterkeyhint="done">
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lbl" id="stLbl">สถานะ</span>
+        <div class="seg" id="status" role="group" aria-labelledby="stLbl">
+          <button type="button" data-st="book" aria-pressed="true">จอง</button>
+          <button type="button" data-st="dep" aria-pressed="false">มัดจำแล้ว</button>
+          <button type="button" data-st="paid" aria-pressed="false">จ่ายครบ</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===== ขอบเขตงาน (ใช้ร่วมกันในแท็บรายการและผังล็อค) ===== -->
+  <div class="scope" id="scope" hidden>
+    <label class="lbl" for="fEvent">งาน</label>
+    <select id="fEvent"></select>
+  </div>
+
+  <!-- ===== รายการ ===== -->
+  <section id="view-list" hidden aria-labelledby="tab-list" style="display:flex;flex-direction:column;gap:14px">
+    <div class="summary" id="summary"></div>
+    <div class="zonebars" id="zonebars"></div>
+    <div class="filters">
+      <input type="search" id="q" class="wide" placeholder="ค้นหา ชื่อ เบอร์ สินค้า เลขล็อค" aria-label="ค้นหา">
+      <select id="fZone" aria-label="กรองโซน"></select>
+      <select id="fStatus" aria-label="กรองสถานะ">
+        <option value="">ทุกสถานะ</option><option value="book">จอง</option><option value="dep">มัดจำแล้ว</option><option value="paid">จ่ายครบ</option>
+      </select>
+      <select id="fSort" aria-label="เรียงลำดับ">
+        <option value="lock">เรียงตามโซนและเลขล็อค</option><option value="new">ล่าสุดก่อน</option>
+      </select>
+      <button type="button" class="btn" id="exportBtn">ส่งออก CSV (Excel)</button>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ===== ผังล็อค ===== -->
+  <section id="view-map" hidden aria-labelledby="tab-map" style="display:flex;flex-direction:column;gap:16px">
+    <div class="legend">
+      <span class="key" data-st="book">จอง</span><span class="key" data-st="dep">มัดจำแล้ว</span><span class="key" data-st="paid">จ่ายครบ</span>
+    </div>
+    <div id="mapBody" style="display:flex;flex-direction:column;gap:18px"></div>
+  </section>
+</div>
+
+<div class="savebar" id="savebar">
+  <div class="in">
+    <button type="button" class="btn" id="clearBtn">ล้าง</button>
+    <button type="button" class="btn primary" id="saveBtn">บันทึก</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  var STATUS = { book: "จอง", dep: "มัดจำแล้ว", paid: "จ่ายครบ" };
+  var NEXT = { book: "dep", dep: "paid", paid: "book" };
+  var CATS = ["อาหาร", "เครื่องดื่ม", "ของทอด", "ปิ้งย่าง", "ขนม", "ผลไม้", "แฟชั่น", "กระทง", "ของใช้", "ของเล่น"];
+  var DEFAULT_ZONES = "ABCDEFGHIJKLM".split("");
+  var collator = new Intl.Collator("th", { numeric: true, sensitivity: "base" });
+  var fmt = function (n) { return Number(n).toLocaleString("th-TH"); };
+
+  var db = null, user = null, downloads = null, uid = null;
+  var rows = [], rowsById = new Map(), names = {};
+  var state = {
+    tab: "form", event: store.get("event", ""), zone: store.get("zone", ""), cat: "", status: "book",
+    editingId: null, ro: false, busy: false, extraZones: store.get("zones.extra", []),
+    fEvent: null, fZone: "", fStatus: "", q: "", sort: "lock"
+  };
+
+  function h(tag, props) {
+    var el = document.createElement(tag);
+    if (props) Object.keys(props).forEach(function (k) {
+      var v = props[k];
+      if (k === "class") el.className = v;
+      else if (k.indexOf("on") === 0) el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, "");
+      else if (v !== false && v != null) el.setAttribute(k, v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      kids.forEach(function (kid) {
+        if (kid == null || kid === false) return;
+        el.append(kid.nodeType ? kid : document.createTextNode(kid));
+      });
+    }
+    return el;
+  }
+
+  function keyOf(ev, z, l) {
+    return [ev, z, l].map(function (s) { return String(s).trim().toLowerCase(); }).join("|");
+  }
+  function idOf(k) {
+    var h1 = 5381, h2 = 0x811c9dc5;
+    for (var i = 0; i < k.length; i++) {
+      var c = k.charCodeAt(i);
+      h1 = ((h1 * 33) ^ c) >>> 0;
+      h2 = Math.imul(h2 ^ c, 16777619) >>> 0;
+    }
+    return "b_" + h1.toString(36) + h2.toString(36);
+  }
+
+  var toastTimer;
+  function toast(msg, kind) {
+    var t = $("#toast");
+    t.textContent = msg; t.dataset.k = kind || ""; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2200);
+  }
+  function setSync(s, txt) { $("#sync").dataset.s = s; $("#syncTxt").textContent = txt; }
+
+  /* ---------- tabs ---------- */
+  function setTab(t) {
+    state.tab = t;
+    document.querySelectorAll(".tab").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
+    $("#view-form").hidden = t !== "form";
+    $("#view-list").hidden = t !== "list";
+    $("#view-map").hidden = t !== "map";
+    $("#scope").hidden = t === "form";
+    $("#savebar").hidden = t !== "form";
+    if (t === "list") renderList();
+    if (t === "map") renderMap();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- form pieces ---------- */
+  function allZones() {
+    var out = DEFAULT_ZONES.slice();
+    state.extraZones.concat(rows.map(function (r) { return r.zone; })).forEach(function (z) {
+      if (z && out.indexOf(z) < 0) out.push(z);
+    });
+    if (state.zone && out.indexOf(state.zone) < 0) out.push(state.zone);
+    return out;
+  }
+  function renderZones() {
+    var box = $("#zones"); box.textContent = "";
+    allZones().forEach(function (z) {
+      box.append(h("button", {
+        type: "button", class: "zbtn", "aria-pressed": String(state.zone === z),
+        onclick: function () { state.zone = state.zone === z ? "" : z; store.set("zone", state.zone); renderZones(); renderDup(); $("#lock").focus(); }
+      }, z));
+    });
+    box.append(h("button", {
+      type: "button", class: "zbtn add", "aria-label": "เพิ่มโซน",
+      onclick: function () { var f = $("#zoneAdd"); f.hidden = !f.hidden; if (!f.hidden) $("#zoneNew").focus(); }
+    }, "+"));
+  }
+  function distinctEvents() {
+    var latest = new Map();
+    rows.forEach(function (r) {
+      if (!r.event) return;
+      latest.set(r.event, Math.max(latest.get(r.event) || 0, r.ts || 0));
+    });
+    return Array.from(latest.entries()).sort(function (a, b) { return b[1] - a[1]; }).map(function (e) { return e[0]; });
+  }
+  function renderEvents() {
+    var evs = distinctEvents();
+    var dl = $("#eventList"); dl.textContent = "";
+    evs.forEach(function (e) { dl.append(h("option", { value: e })); });
+    var box = $("#eventChips"); box.textContent = "";
+    var cur = $("#event").value.trim();
+    evs.slice(0, 4).forEach(function (e) {
+      box.append(h("button", {
+        type: "button", class: "chip", "aria-pressed": String(cur === e),
+        onclick: function () { $("#event").value = e; state.event = e; store.set("event", e); renderEvents(); renderDup(); }
+      }, e));
+    });
+  }
+  function renderCats() {
+    var box = $("#cats"); box.textContent = "";
+    CATS.forEach(function (c) {
+      box.append(h("button", {
+        type: "button", class: "chip", "aria-pressed": String(state.cat === c),
+        onclick: function () { state.cat = state.cat === c ? "" : c; renderCats(); }
+      }, c));
+    });
+  }
+  function renderStatus() {
+    document.querySelectorAll("#status button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.st === state.status)); });
+  }
+  function currentKeyRow() {
+    var ev = $("#event").value.trim(), l = $("#lock").value.trim();
+    if (!ev || !state.zone || !l) return null;
+    return rowsById.get(idOf(keyOf(ev, state.zone, l))) || null;
+  }
+  function renderDup() {
+    var box = $("#dup"), ev = $("#event").value.trim(), l = $("#lock").value.trim().toUpperCase();
+    var r = currentKeyRow();
+    var label = "บันทึก";
+    if (state.zone && l) label = (r && r.id !== state.editingId ? "อัปเดต " : "บันทึก ") + state.zone + "-" + l;
+    $("#saveBtn").textContent = label;
+    if (r && r.id !== state.editingId) {
+      var who = r.name || r.product || "ไม่ระบุชื่อ";
+      box.textContent = "ล็อค " + r.zone + "-" + r.lock + " มีคนจองแล้ว: " + who +
+        (r.price != null ? " · " + fmt(r.price) + " บาท" : "") + " (" + (STATUS[r.status] || "จอง") + "). ถ้ากดบันทึก ข้อมูลเดิมจะถูกแทนที่";
+      box.hidden = false;
+    } else { box.hidden = true; }
+  }
+  function readPrice() {
+    var raw = $("#price").value.replace(/[^\d.]/g, "");
+    return raw === "" ? null : Number(raw);
+  }
+  function clearEntry(keepLock) {
+    $("#price").value = ""; $("#product").value = ""; $("#cname").value = ""; $("#phone").value = "";
+    state.cat = ""; renderCats();
+    if (!keepLock) $("#lock").value = "";
+    state.editingId = null; $("#editBar").hidden = true;
+    renderDup();
+  }
+  function autofillFromPhone() {
+    var d = $("#phone").value.replace(/\D/g, "");
+    if (d.length < 9) return;
+    var m = rows.filter(function (r) { return (r.phone || "").replace(/\D/g, "") === d; })
+      .sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); })[0];
+    if (!m) return;
+    var did = false;
+    if (!$("#cname").value && m.name) { $("#cname").value = m.name; did = true; }
+    if (!$("#product").value && m.product) { $("#product").value = m.product; did = true; }
+    if (!state.cat && m.cat) { state.cat = m.cat; renderCats(); did = true; }
+    if (did) toast("เติมข้อมูลจากครั้งก่อนให้แล้ว");
+  }
+
+  async function save() {
+    if (!db || state.ro || state.busy) return;
+    var ev = $("#event").value.trim(), zone = state.zone, lock = $("#lock").value.trim().toUpperCase();
+    if (!ev) { toast("กรอกชื่องานก่อน", "err"); $("#event").focus(); return; }
+    if (!zone) { toast("เลือกโซนก่อน", "err"); return; }
+    if (!lock) { toast("กรอกเลขล็อคก่อน", "err"); $("#lock").focus(); return; }
+    var id = idOf(keyOf(ev, zone, lock));
+    var old = rowsById.get(id);
+    var now = Date.now();
+    var data = {
+      event: ev, zone: zone, lock: lock, price: readPrice(), cat: state.cat || "",
+      product: $("#product").value.trim(), name: $("#cname").value.trim(), phone: $("#phone").value.trim(),
+      status: state.status, by: uid || null, ts: now, created: (old && (old.created || old.ts)) || now
+    };
+    state.busy = true; $("#saveBtn").disabled = true;
+    try {
+      await db.doc("bookings/" + id).set(data);
+      if (state.editingId && state.editingId !== id) await db.doc("bookings/" + state.editingId).delete();
+      store.set("event", ev); store.set("zone", zone); state.event = ev;
+      toast("บันทึก " + zone + "-" + lock + " แล้ว");
+      var next = lock;
+      if ($("#autoNext").checked && /^\d+$/.test(lock)) next = String(Number(lock) + 1).padStart(lock.length, "0");
+      clearEntry(false);
+      $("#lock").value = $("#autoNext").checked ? next : "";
+      renderDup(); renderEvents();
+      $("#lock").focus(); $("#lock").select();
+    } catch (e) {
+      var code = e && e.code;
+      if (code === "quota_exceeded") toast("พื้นที่เก็บข้อมูลเต็ม ลบรายการเก่าก่อน", "err");
+      else if (code === "invalid_argument" || code === "permission-denied") { toast("บัญชีนี้บันทึกไม่ได้ ติดต่อเจ้าของเพจเพื่อขอสิทธิ์แก้ไข", "err"); setRO("บัญชีนี้ดูข้อมูลได้อย่างเดียว"); }
+      else toast("บันทึกไม่สำเร็จ ลองอีกครั้ง", "err");
+    } finally {
+      state.busy = false; $("#saveBtn").disabled = state.ro;
+    }
+  }
+
+  function loadRow(r) {
+    state.editingId = r.id;
+    $("#event").value = r.event || ""; state.event = r.event || "";
+    state.zone = r.zone || ""; $("#lock").value = r.lock || "";
+    $("#price").value = r.price == null ? "" : String(r.price);
+    state.cat = r.cat || ""; $("#product").value = r.product || "";
+    $("#cname").value = r.name || ""; $("#phone").value = r.phone || "";
+    state.status = r.status || "book";
+    $("#editTxt").textContent = "กำลังแก้ไข " + r.zone + "-" + r.lock;
+    $("#editBar").hidden = false;
+    renderZones(); renderCats(); renderStatus(); renderEvents(); renderDup();
+    setTab("form");
+  }
+
+  function setRO(msg) {
+    state.ro = true; $("#saveBtn").disabled = true;
+    var n = $("#roNote"); n.textContent = msg; n.hidden = false;
+  }
+
+  /* ---------- list ---------- */
+  function filtered(ignoreExtra) {
+    var q = state.q.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (state.fEvent && r.event !== state.fEvent) return false;
+      if (ignoreExtra) return true;
+      if (state.fZone && r.zone !== state.fZone) return false;
+      if (state.fStatus && r.status !== state.fStatus) return false;
+      if (q) {
+        var hay = [r.zone + "-" + r.lock, r.zone + r.lock, r.name, r.phone, r.product, r.cat, r.event].join(" ").toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+  function sortRows(arr) {
+    var a = arr.slice();
+    if (state.sort === "new") return a.sort(function (x, y) { return (y.ts || 0) - (x.ts || 0); });
+    return a.sort(function (x, y) {
+      return collator.compare(x.event || "", y.event || "") || collator.compare(x.zone || "", y.zone || "") || collator.compare(x.lock || "", y.lock || "");
+    });
+  }
+  function renderScope() {
+    var sel = $("#fEvent"), evs = distinctEvents();
+    if (state.fEvent === null) state.fEvent = state.event && evs.indexOf(state.event) >= 0 ? state.event : (evs[0] || "");
+    if (state.fEvent && evs.indexOf(state.fEvent) < 0) state.fEvent = "";
+    sel.textContent = "";
+    sel.append(h("option", { value: "" }, "ทุกงาน"));
+    evs.forEach(function (e) { sel.append(h("option", { value: e }, e)); });
+    sel.value = state.fEvent;
+    var zs = $("#fZone"), zlist = [];
+    rows.forEach(function (r) { if (r.zone && zlist.indexOf(r.zone) < 0) zlist.push(r.zone); });
+    zlist.sort(function (a, b) { return collator.compare(a, b); });
+    if (state.fZone && zlist.indexOf(state.fZone) < 0) state.fZone = "";
+    zs.textContent = "";
+    zs.append(h("option", { value: "" }, "ทุกโซน"));
+    zlist.forEach(function (z) { zs.append(h("option", { value: z }, "โซน " + z)); });
+    zs.value = state.fZone;
+  }
+  function renderList() {
+    var list = filtered(false), box = $("#cards");
+    var sum = list.reduce(function (s, r) { return s + (Number(r.price) || 0); }, 0);
+    var priced = list.filter(function (r) { return r.price != null; }).length;
+    var sm = $("#summary"); sm.textContent = "";
+    [[String(list.length), "ล็อคที่บันทึก"], [fmt(sum), "ยอดรวมราคาปิดประมูล (บาท)"],
+     [priced ? fmt(Math.round(sum / priced)) : "-", "เฉลี่ยต่อล็อค (บาท)"]].forEach(function (p) {
+      sm.append(h("div", null, h("b", null, p[0]), h("small", null, p[1])));
+    });
+    var zb = $("#zonebars"); zb.textContent = "";
+    var byZone = new Map();
+    list.forEach(function (r) {
+      var z = byZone.get(r.zone) || { n: 0, sum: 0 }; z.n++; z.sum += Number(r.price) || 0; byZone.set(r.zone, z);
+    });
+    var maxSum = Math.max.apply(null, [1].concat(Array.from(byZone.values()).map(function (z) { return z.sum; })));
+    Array.from(byZone.entries()).sort(function (a, b) { return collator.compare(a[0], b[0]); }).forEach(function (e) {
+      var pct = Math.max(2, Math.round(e[1].sum / maxSum * 100));
+      zb.append(h("div", { class: "zb" }, h("span", null, "โซน " + e[0]),
+        h("span", { class: "bar" }, h("i", { style: "width:" + pct + "%" })),
+        h("span", { class: "num" }, e[1].n + " ล็อค · ฿" + fmt(e[1].sum))));
+    });
+    $("#exportBtn").hidden = !downloads;
+    box.textContent = "";
+    if (!list.length) {
+      box.append(h("div", { class: "empty", style: "grid-column:1/-1" },
+        h("strong", null, rows.length ? "ไม่พบรายการที่ตรงกับตัวกรอง" : "ยังไม่มีล็อคที่บันทึก"),
+        h("p", null, rows.length ? "ลองล้างคำค้นหาหรือเปลี่ยนตัวกรอง" : "เลือกงาน โซน กรอกเลขล็อคกับราคาปิดประมูล แล้วกดบันทึก ทุกคนที่เปิดหน้านี้จะเห็นทันที"),
+        rows.length ? null : h("button", { class: "btn primary", type: "button", onclick: function () { setTab("form"); } }, "บันทึกล็อคแรก")));
+      return;
+    }
+    sortRows(list).forEach(function (r) { box.append(card(r)); });
+  }
+  function card(r) {
+    var delBtn;
+    delBtn = h("button", {
+      type: "button", class: "btn small",
+      onclick: async function () {
+        if (!delBtn.dataset.armed) {
+          delBtn.dataset.armed = "1"; delBtn.textContent = "แตะอีกครั้งเพื่อลบ"; delBtn.classList.add("danger");
+          setTimeout(function () { delBtn.dataset.armed = ""; delBtn.textContent = "ลบ"; delBtn.classList.remove("danger"); }, 3000);
+          return;
+        }
+        try { await db.doc("bookings/" + r.id).delete(); toast("ลบ " + r.zone + "-" + r.lock + " แล้ว"); }
+        catch (e) { toast("ลบไม่สำเร็จ", "err"); }
+      }
+    }, "ลบ");
+    var contact = [];
+    if (r.name) contact.push(h("span", null, r.name));
+    if (r.phone) {
+      contact.push(h("span", { style: "user-select:all;font-variant-numeric:tabular-nums" }, r.phone));
+      contact.push(h("button", {
+        type: "button", class: "btn small",
+        onclick: function () {
+          var p = navigator.clipboard && navigator.clipboard.writeText(r.phone);
+          if (p && p.then) p.then(function () { toast("คัดลอกเบอร์แล้ว"); }, function () { toast(r.phone); });
+          else toast(r.phone);
+        }
+      }, "คัดลอก"));
+    }
+    var when = r.ts ? new Date(r.ts).toLocaleDateString("th-TH", { day: "numeric", month: "short" }) + " " + new Date(r.ts).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
+    var by = r.by && names[r.by] ? " · โดย " + names[r.by] : "";
+    return h("article", { class: "card" },
+      h("div", { class: "top" },
+        h("span", { class: "badge" }, r.zone + "-" + r.lock),
+        h("span", { class: "ev" }, r.event),
+        r.price != null ? h("span", { class: "price" }, "฿" + fmt(r.price)) : null),
+      (r.cat || r.product) ? h("div", { class: "what" }, r.cat ? h("span", { class: "cat" }, r.cat) : null, r.product) : null,
+      contact.length ? h("div", { class: "who" }, contact) : null,
+      h("div", { class: "acts" },
+        h("button", {
+          type: "button", class: "pill", "data-st": r.status || "book", title: "แตะเพื่อเปลี่ยนสถานะ",
+          onclick: async function () {
+            try { await db.doc("bookings/" + r.id).update({ status: NEXT[r.status || "book"], ts: Date.now(), by: uid || null }); }
+            catch (e) { toast("เปลี่ยนสถานะไม่สำเร็จ", "err"); }
+          }
+        }, STATUS[r.status] || "จอง"),
+        h("span", { class: "spacer" }),
+        h("button", { type: "button", class: "btn small", onclick: function () { loadRow(r); } }, "แก้ไข"),
+        delBtn),
+      h("div", { class: "meta" }, when + by));
+  }
+
+  /* ---------- map ---------- */
+  function renderMap() {
+    var box = $("#mapBody"); box.textContent = "";
+    var list = filtered(true);
+    if (!list.length) {
+      box.append(h("div", { class: "empty" }, h("strong", null, "ยังไม่มีล็อคในผัง"), h("p", null, "ล็อคที่บันทึกแล้วจะขึ้นเป็นช่องสีตามสถานะ แตะช่องเพื่อแก้ไข")));
+      return;
+    }
+    var groups = new Map();
+    list.forEach(function (r) { var g = groups.get(r.zone) || []; g.push(r); groups.set(r.zone, g); });
+    Array.from(groups.entries()).sort(function (a, b) { return collator.compare(a[0], b[0]); }).forEach(function (e) {
+      var sum = e[1].reduce(function (s, r) { return s + (Number(r.price) || 0); }, 0);
+      var cells = h("div", { class: "cells" });
+      e[1].sort(function (a, b) { return collator.compare(a.lock, b.lock); }).forEach(function (r) {
+        cells.append(h("button", {
+          type: "button", class: "cell", "data-st": r.status || "book",
+          title: [r.name, r.product, r.price != null ? "฿" + fmt(r.price) : ""].filter(Boolean).join(" · "),
+          "aria-label": "ล็อค " + r.zone + "-" + r.lock + " " + (STATUS[r.status] || ""),
+          onclick: function () { loadRow(r); }
+        }, r.lock));
+      });
+      box.append(h("div", { class: "zgroup" }, h("h3", null, "โซน " + e[0], h("span", null, e[1].length + " ล็อค · ฿" + fmt(sum))), cells));
+    });
+  }
+
+  /* ---------- export ---------- */
+  function csvCell(v) { var s = v == null ? "" : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  async function exportCsv() {
+    if (!downloads) return;
+    var list = sortRows(filtered(false));
+    if (!list.length) { toast("ไม่มีรายการให้ส่งออก", "err"); return; }
+    var head = ["งาน", "โซน", "เลขล็อค", "ราคาปิดประมูล", "หมวด", "สินค้า", "ชื่อผู้ติดต่อ", "เบอร์โทร", "สถานะ", "บันทึกล่าสุด"];
+    var lines = [head.map(csvCell).join(",")];
+    list.forEach(function (r) {
+      lines.push([r.event, r.zone, r.lock, r.price, r.cat, r.product, r.name, r.phone, STATUS[r.status] || "", r.ts ? new Date(r.ts).toLocaleString("th-TH") : ""].map(csvCell).join(","));
+    });
+    var d = new Date(), stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    try {
+      await downloads.save({ filename: "จองล็อค-" + stamp + ".csv", data: "﻿" + lines.join("\r\n") });
+      toast("ส่งออกแล้ว");
+    } catch (e) {
+      if (e && e.code === "declined") return;
+      toast("ส่งออกไม่สำเร็จ", "err");
+    }
+  }
+
+  /* ---------- data ---------- */
+  async function resolveNames() {
+    if (!user) return;
+    var ids = Array.from(new Set(rows.map(function (r) { return r.by; }).filter(Boolean)));
+    if (!ids.length) return;
+    var ps = await user.profiles(ids), changed = false;
+    ids.forEach(function (id) {
+      var n = (ps[id] && ps[id].name) || "";
+      if (names[id] !== n) { names[id] = n; changed = true; }
+    });
+    if (changed && state.tab === "list") renderList();
+  }
+  function renderAll() {
+    $("#cnt").textContent = rows.length ? "(" + rows.length + ")" : "";
+    renderScope(); renderZones(); renderEvents(); renderDup();
+    if (!$("#event").value && !state.editingId) {
+      var latest = distinctEvents()[0];
+      if (latest) { $("#event").value = latest; state.event = latest; renderEvents(); }
+    }
+    if (state.tab === "list") renderList();
+    if (state.tab === "map") renderMap();
+  }
+  function onSnap(snap) {
+    rows = snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; });
+    rowsById = new Map(rows.map(function (r) { return [r.id, r]; }));
+    setSync(snap.metadata.hasPendingWrites ? "busy" : "ok", snap.metadata.hasPendingWrites ? "กำลังส่ง" : "ซิงก์แล้ว");
+    renderAll();
+    resolveNames();
+  }
+
+  function browserDownloads() {
+    return { save: async function (r) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([r.data], { type: "text/csv;charset=utf-8" }));
+      a.download = r.filename; document.body.append(a); a.click(); a.remove();
+      return { status: "saved" };
+    } };
+  }
+  function firebaseDb() {
+    var fs = firebase.firestore();
+    return {
+      collection: function (p) {
+        return { onSnapshot: function (next, error) {
+          return fs.collection(p).onSnapshot({ includeMetadataChanges: true }, function (s) {
+            next({
+              docs: s.docs.map(function (d) { return { id: d.id, data: function () { return d.data(); } }; }),
+              metadata: { hasPendingWrites: s.metadata.hasPendingWrites }
+            });
+          }, error);
+        } };
+      },
+      doc: function (p) {
+        var parts = p.split("/"), r = fs.collection(parts[0]).doc(parts[1]);
+        return {
+          set: function (d) { return r.set(d); },
+          update: function (d) { return r.update(d); },
+          delete: function () { return r.delete(); }
+        };
+      }
+    };
+  }
+  function localDb() {
+    var KEY = "lockbook.bookings", subs = [];
+    function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; } }
+    function put(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+    function emit() {
+      var o = load();
+      var docs = Object.keys(o).map(function (id) { return { id: id, data: function () { return o[id]; } }; });
+      subs.forEach(function (f) { f({ docs: docs, metadata: { hasPendingWrites: false } }); });
+    }
+    return {
+      collection: function () { return { onSnapshot: function (n) { subs.push(n); emit(); return function () {}; } }; },
+      doc: function (p) {
+        var id = p.split("/")[1];
+        return {
+          set: async function (d) { var o = load(); o[id] = d; put(o); emit(); },
+          update: async function (d) { var o = load(); o[id] = Object.assign({}, o[id], d); put(o); emit(); },
+          delete: async function () { var o = load(); delete o[id]; put(o); emit(); }
+        };
+      }
+    };
+  }
+
+  /* ---------- wiring ---------- */
+  document.querySelectorAll(".tab").forEach(function (b) { b.addEventListener("click", function () { setTab(b.dataset.tab); }); });
+  $("#event").addEventListener("input", function () { state.event = $("#event").value.trim(); store.set("event", state.event); renderEvents(); renderDup(); });
+  $("#lock").addEventListener("input", renderDup);
+  $("#price").addEventListener("input", function () { var v = $("#price").value.replace(/[^\d]/g, ""); $("#price").value = v; });
+  $("#phone").addEventListener("input", autofillFromPhone);
+  document.querySelectorAll("#priceChips button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (b.dataset.add === "clear") { $("#price").value = ""; return; }
+      $("#price").value = String((readPrice() || 0) + Number(b.dataset.add));
+    });
+  });
+  document.querySelectorAll("#status button").forEach(function (b) {
+    b.addEventListener("click", function () { state.status = b.dataset.st; renderStatus(); });
+  });
+  $("#form").addEventListener("submit", function (e) { e.preventDefault(); save(); });
+  /* Enter moves on: งาน → เลขล็อค → ราคา (บันทึก); สินค้า → ชื่อ → เบอร์ (บันทึก) */
+  var NEXT_FIELD = { event: "lock", lock: "price", product: "cname", cname: "phone" };
+  $("#form").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.target.tagName !== "INPUT" || e.target.id === "zoneNew") return;
+    e.preventDefault();
+    var nx = NEXT_FIELD[e.target.id];
+    if (nx) $("#" + nx).focus(); else save();
+  });
+  $("#saveBtn").addEventListener("click", save);
+  $("#clearBtn").addEventListener("click", function () { clearEntry(false); $("#lock").focus(); });
+  $("#cancelEdit").addEventListener("click", function () { clearEntry(false); });
+  function addZone() {
+    var z = $("#zoneNew").value.trim().toUpperCase();
+    if (!z) return;
+    if (state.extraZones.indexOf(z) < 0 && DEFAULT_ZONES.indexOf(z) < 0) { state.extraZones.push(z); store.set("zones.extra", state.extraZones); }
+    state.zone = z; store.set("zone", z); $("#zoneNew").value = ""; $("#zoneAdd").hidden = true;
+    renderZones(); renderDup(); $("#lock").focus();
+  }
+  $("#zoneAddBtn").addEventListener("click", addZone);
+  $("#zoneNew").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addZone(); } });
+  $("#fEvent").addEventListener("change", function () { state.fEvent = $("#fEvent").value; renderList(); renderMap(); });
+  $("#fZone").addEventListener("change", function () { state.fZone = $("#fZone").value; renderList(); });
+  $("#fStatus").addEventListener("change", function () { state.fStatus = $("#fStatus").value; renderList(); });
+  $("#fSort").addEventListener("change", function () { state.sort = $("#fSort").value; renderList(); });
+  $("#q").addEventListener("input", function () { state.q = $("#q").value; renderList(); });
+  $("#exportBtn").addEventListener("click", exportCsv);
+
+  $("#event").value = state.event;
+  renderZones(); renderCats(); renderStatus(); renderEvents(); renderDup(); setTab("form");
+
+  (async function init() {
+    var c = window.claude;
+    if (!c || !c.use) {
+      downloads = browserDownloads();
+      var cfg = window.FIREBASE_CONFIG;
+      if (cfg && cfg.apiKey && window.firebase) {
+        /* โหมด Firebase: ทุกเครื่องเห็นข้อมูลเดียวกัน */
+        try {
+          firebase.initializeApp(cfg);
+          var cred = await firebase.auth().signInAnonymously();
+          uid = cred.user.uid;
+          db = firebaseDb();
+        } catch (e) {
+          setSync("err", "เชื่อม Firebase ไม่ได้");
+          setRO("เชื่อม Firebase ไม่สำเร็จ ตรวจ firebase-config.js และเปิด Anonymous ใน Authentication");
+          return;
+        }
+        db.collection("bookings").onSnapshot(onSnap, function (err) {
+          setSync("err", "การเชื่อมต่อขัดข้อง");
+          if (err && err.code === "permission-denied") setRO("Firestore ไม่อนุญาตให้เข้าถึง ตรวจ Rules ในไฟล์ firestore.rules");
+        });
+        return;
+      }
+      /* ไม่ได้ตั้ง Firebase: เก็บในเบราว์เซอร์เครื่องนี้ */
+      db = localDb();
+      setSync("ok", "เก็บในเครื่องนี้");
+      db.collection("bookings").onSnapshot(function (snap) { onSnap(snap); setSync("ok", "เก็บในเครื่องนี้"); });
+      return;
+    }
+    try { user = await c.use("user"); } catch (e) { user = null; }
+    try { downloads = await c.use("downloads"); } catch (e) { downloads = null; }
+    try { db = await c.use("db"); } catch (e) { db = null; }
+    if (user) {
+      try { uid = await user.id(); } catch (e) { uid = null; }
+      try { if ((await user.can("data.write")) === false) setRO("บัญชีนี้ดูข้อมูลได้อย่างเดียว ขอสิทธิ์ผู้ร่วมแก้ไขจากเจ้าของเพจถ้าต้องการบันทึก"); } catch (e) {}
+    }
+    if (!db) { setSync("err", "ไม่ได้เชื่อมต่อ"); setRO("ยังเชื่อมต่อฐานข้อมูลไม่ได้ ลองเข้าสู่ระบบ claude.ai แล้วเปิดหน้านี้ใหม่"); return; }
+    db.collection("bookings").onSnapshot(onSnap, function () { setSync("err", "การเชื่อมต่อขัดข้อง"); });
+  })();
+})();
+</script>
+</body>
+</html>
