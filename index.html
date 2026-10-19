@@ -131,9 +131,11 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); align-items: center; }
 .legend .key { padding: 0 8px; font-size: 12px; }
 .zgroup { display: flex; flex-direction: column; gap: 6px; }
-.zhead { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 4px 10px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; }
+.zhead { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 4px 10px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; cursor: pointer; }
+.ztog { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
+.zhead .zplan { flex: none; min-height: 24px; padding: 0 9px; font-size: 12px; }
 .zhead .chev { flex: none; width: 14px; color: var(--muted); transition: transform .15s; }
-.zhead[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.ztog[aria-expanded="true"] .chev { transform: rotate(90deg); }
 .zhead .zn { font: 600 15px/1.2 var(--font-display); overflow-wrap: anywhere; }
 .zhead .zt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin-left: auto; text-align: right; }
 .zhead .zbar { flex: none; width: 44px; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
@@ -215,6 +217,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 .evinfo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 13px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .evinfo .k { color: var(--muted); margin-right: 4px; }
 .evinfo a { color: var(--accent); }
+.plant { flex: none; margin-left: auto; padding: 0; width: 72px; height: 52px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface2); }
+.plant img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .planbox { display: flex; align-items: center; gap: 10px; }
 .planbox img { width: 84px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--surface2); }
 .planview { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.9); display: flex; flex-direction: column; }
@@ -363,7 +367,7 @@ window.FIREBASE_CONFIG = {
   function zoneList(ev) {
     var out = [], map = {};
     (ev.zones || []).forEach(function (zz) {
-      var g = { z: zz.z, t: zz.t || "a", p: zz.p || 0, locks: [], set: {} };
+      var g = { z: zz.z, t: zz.t || "a", p: zz.p || 0, pid: zz.pid || null, locks: [], set: {} };
       for (var i = zz.from; i <= zz.to; i++) { g.locks.push(String(i)); g.set[String(i)] = 1; }
       out.push(g); map[zz.z] = g;
     });
@@ -469,7 +473,12 @@ window.FIREBASE_CONFIG = {
         var tel = String(ev.contact).replace(/[^\d+]/g, "");
         info.append(h("span", null, h("span", { class: "k" }, "ติดต่อ"), tel.length >= 9 && /^[\d\s+\-().]+$/.test(ev.contact) ? h("a", { href: "tel:" + tel }, ev.contact) : ev.contact));
       }
-      if (ev.hasPlan) info.append(h("button", { type: "button", class: "btn small", onclick: function () { showPlan(ev.id); } }, "ดูผังภาพ"));
+      if (ev.hasPlan) {
+        var th = h("img", { alt: "ผังล็อคของงาน" }); if (planCache[ev.id]) th.src = planCache[ev.id];
+        var tb = h("button", { type: "button", class: "plant", "aria-label": "ดูผังภาพของงาน", title: "แตะเพื่อดูผังภาพ", onclick: function () { showPlan(ev.id, "ผังงาน " + ev.name); } }, th);
+        if (!planCache[ev.id]) loadPlan(ev.id).then(function (d) { if (d) th.src = d; else tb.hidden = true; });
+        info.append(tb);
+      }
       box.append(info);
     }
     var hot = [];
@@ -593,15 +602,15 @@ window.FIREBASE_CONFIG = {
       });
       var open = forceOpen || !col[g.z];
       var pct = g.locks.length ? Math.round(booked / g.locks.length * 100) : 0;
-      var head = h("button", {
-        type: "button", class: "zhead", "aria-expanded": String(open),
-        onclick: function () {
-          var c = colState(ev.id);
-          if (forceOpen) { return; }
-          c[g.z] = !c[g.z]; if (!c[g.z]) delete c[g.z];
-          store.set("col." + ev.id, c); renderBody(ev);
-        }
-      }, h("span", { class: "chev" }, "▸"), h("span", { class: "zn" }, g.z),
+      function toggleZ() {
+        if (forceOpen) return;
+        var c = colState(ev.id); c[g.z] = !c[g.z]; if (!c[g.z]) delete c[g.z];
+        store.set("col." + ev.id, c); renderBody(ev);
+      }
+      var head = h("div", { class: "zhead", onclick: function (e) { if (!e.target.closest(".zplan")) toggleZ(); } },
+        h("button", { type: "button", class: "ztog", "aria-expanded": String(open), onclick: function (e) { e.stopPropagation(); toggleZ(); } },
+          h("span", { class: "chev" }, "▸"), h("span", { class: "zn" }, g.z)),
+        g.pid ? h("button", { type: "button", class: "btn zplan", onclick: function () { showPlan(g.pid, "ผังล็อค " + g.z); } }, "ดูผังล็อค") : null,
         h("span", { class: "zbar" }, h("i", { style: "width:" + pct + "%" })),
         h("span", { class: "zt" }, booked + "/" + g.locks.length + " · ฿" + fmt(sum)));
       body.append(h("div", { class: "zgroup" }, head, open ? cells : null));
@@ -837,21 +846,21 @@ window.FIREBASE_CONFIG = {
       im.src = url;
     });
   }
-  function showPlan(eid) {
-    var wrap = h("div", { class: "planview", role: "dialog", "aria-modal": "true", "aria-label": "ผังล็อค" });
+  function showPlan(pid, title) {
+    var wrap = h("div", { class: "planview", role: "dialog", "aria-modal": "true", "aria-label": title || "ผังล็อค" });
     var img = h("img", { alt: "ผังล็อค" });
     img.addEventListener("click", function () { img.classList.toggle("zoom"); });
-    wrap.append(h("div", { class: "pv-bar" }, h("button", { type: "button", class: "btn small", onclick: function () { wrap.remove(); } }, "ปิด ✕")),
+    wrap.append(h("div", { class: "pv-bar", style: "align-items:center;gap:10px;color:#fff" }, h("span", { style: "flex:1;font-size:14px" }, title || ""), h("button", { type: "button", class: "btn small", onclick: function () { wrap.remove(); } }, "ปิด ✕")),
       h("div", { class: "pv-img" }, img));
     document.body.append(wrap);
-    loadPlan(eid).then(function (d) { if (d) img.src = d; else { wrap.remove(); toast(d === null ? "โหลดรูปไม่ได้" : "ยังไม่มีรูปผัง", "err"); } });
+    loadPlan(pid).then(function (d) { if (d) img.src = d; else { wrap.remove(); toast(d === null ? "โหลดรูปไม่ได้" : "ยังไม่มีรูปผัง", "err"); } });
   }
 
   /* ---------- สร้าง / แก้ไขงาน ---------- */
   function openEventEditor(ev) {
     evEdit = {
       id: ev ? ev.id : null, created: ev && ev.created, name: ev ? ev.name : "", date: ev ? (ev.date || "") : "", organizer: ev ? (ev.organizer || "") : "", contact: ev ? (ev.contact || "") : "", hasPlan: !!(ev && ev.hasPlan), plan: undefined, planDirty: false,
-      zones: ev ? (ev.zones || []).map(function (z) { return { z: z.z, from: z.from, to: z.to, t: z.t || "a", p: z.p || 0, orig: z.z }; }) : [],
+      zones: ev ? (ev.zones || []).map(function (z) { return { z: z.z, from: z.from, to: z.to, t: z.t || "a", p: z.p || 0, orig: z.z, pid: z.pid || null, plan: undefined, planDirty: false }; }) : [],
       gen: { prefix: "", style: "letter", start: "A", count: "4", n: "40", t: "a", p: "" }
     };
     renderEventEditor();
@@ -903,6 +912,24 @@ window.FIREBASE_CONFIG = {
     });
     paintPlan();
     var rowsBox = h("div", { class: "stack", style: "gap:6px", id: "zrows" });
+    function zonePlanBox(zz) {
+      var box = h("div", { class: "planbox" });
+      var f = h("input", { type: "file", accept: "image/*", hidden: true, "aria-label": "เลือกรูปผังโซน" });
+      var has = zz.plan ? true : (zz.plan === undefined && !!zz.pid);
+      if (has) {
+        var im = h("img", { alt: "ผังโซน" });
+        if (zz.plan) im.src = zz.plan; else if (planCache[zz.pid]) im.src = planCache[zz.pid]; else loadPlan(zz.pid).then(function (d) { if (d) im.src = d; });
+        box.append(im);
+      }
+      box.append(h("button", { type: "button", class: "btn small", onclick: function () { f.click(); } }, has ? "เปลี่ยนรูป" : "เลือกรูปผังโซน"));
+      if (has) box.append(h("button", { type: "button", class: "btn small danger", onclick: function () { zz.plan = ""; zz.planDirty = true; paintRows(); } }, "เอาออก"));
+      f.addEventListener("change", async function () {
+        var file = f.files && f.files[0]; if (!file) return;
+        try { zz.plan = await compressImage(file); zz.planDirty = true; paintRows(); } catch (e) { toast("ใช้รูปนี้ไม่ได้ ลองรูปอื่น", "err"); }
+      });
+      box.append(f);
+      return box;
+    }
     function paintRows() {
       rowsBox.textContent = "";
       if (!evEdit.zones.length) rowsBox.append(h("p", { class: "sub" }, "ยังไม่มีโซน สร้างต่อเนื่องด้านบน หรือกด + เพิ่มโซน"));
@@ -932,7 +959,8 @@ window.FIREBASE_CONFIG = {
           }, "✕"),
           num("from", "ล็อคแรก"), num("to", "ล็อคสุดท้าย"),
           h("div", { class: "field" }, h("span", { class: "lbl" }, "ประเภท"), tsel),
-          h("div", { class: "field pr3" }, h("span", { class: "lbl" }, "ราคาเริ่มต้นของทุกล็อคในโซน (ไม่บังคับ แก้ทีละล็อคได้)"), pin)));
+          h("div", { class: "field pr3" }, h("span", { class: "lbl" }, "ราคาเริ่มต้นของทุกล็อคในโซน (ไม่บังคับ แก้ทีละล็อคได้)"), pin),
+          h("div", { class: "field pr3" }, h("span", { class: "lbl" }, "รูปผังล็อคของโซน (ไม่บังคับ)"), zonePlanBox(zz))));
       });
     }
 
@@ -993,7 +1021,8 @@ window.FIREBASE_CONFIG = {
           var rs = (rowsByEvent[id] || []).slice();
           for (var i = 0; i < rs.length; i++) await db.doc("bookings/" + rs[i].id).delete();
           await db.doc("events/" + id).delete();
-          try { await db.doc("plans/" + id).delete(); delete planCache[id]; } catch (pe) {}
+          var dev = eventsById.get(id), pids = [id].concat(((dev && dev.zones) || []).map(function (z) { return z.pid; }).filter(Boolean));
+          for (var pj = 0; pj < pids.length; pj++) { try { await db.doc("plans/" + pids[pj]).delete(); delete planCache[pids[pj]]; } catch (pe) {} }
           toast("ลบงานแล้ว"); closeOverlay(); go("events");
         } catch (e) { toast("ลบไม่สำเร็จ", "err"); }
       }
@@ -1028,14 +1057,26 @@ window.FIREBASE_CONFIG = {
         toast("โซน " + z + ": เลขล็อคไม่ถูกต้อง (ล็อคสุดท้ายต้องไม่น้อยกว่าล็อคแรก และไม่เกิน 300 ล็อค)", "err"); return;
       }
       seen[z.toLowerCase()] = 1; total += zz.to - zz.from + 1;
-      zones.push({ z: z, from: zz.from, to: zz.to, t: zz.t === "q" ? "q" : "a", p: zz.p > 0 ? Math.round(zz.p) : 0, orig: zz.orig });
+      zones.push({ z: z, from: zz.from, to: zz.to, t: zz.t === "q" ? "q" : "a", p: zz.p > 0 ? Math.round(zz.p) : 0, orig: zz.orig, pid: zz.pid || null, plan: zz.plan, planDirty: zz.planDirty });
     }
     if (total > 5000) { toast("ล็อครวมเกิน 5,000 ล็อค ลดจำนวนลง", "err"); return; }
     var id = evEdit.id || newId("e_"), now = Date.now(), isNew = !evEdit.id;
     var oldEv = isNew ? null : eventsById.get(id);
-    var clean = zones.map(function (x) { var o = { z: x.z, from: x.from, to: x.to, t: x.t }; if (x.p > 0) o.p = x.p; return o; });
+    var clean;
     state.busy = true; $("#ev-save").disabled = true;
     try {
+      try {
+        for (var zi = 0; zi < zones.length; zi++) {
+          var zx = zones[zi];
+          if (!zx.planDirty) continue;
+          if (zx.plan) { zx.pid = zx.pid || newId("p_"); await db.doc("plans/" + zx.pid).set({ eid: id, img: zx.plan, by: uid || null, ts: now }); planCache[zx.pid] = zx.plan; }
+          else if (zx.pid) { await db.doc("plans/" + zx.pid).delete(); delete planCache[zx.pid]; zx.pid = null; }
+        }
+      } catch (pe2) {
+        toast(pe2 && pe2.code === "permission-denied" ? "เก็บรูปผังไม่ได้ ต้องเพิ่มกฎ plans ใน Firestore Rules (ดู firestore.rules)" : "เก็บรูปผังโซนไม่สำเร็จ", "err");
+        var b2 = $("#ev-save"); if (b2) b2.disabled = false; state.busy = false; return;
+      }
+      clean = zones.map(function (x) { var o = { z: x.z, from: x.from, to: x.to, t: x.t }; if (x.p > 0) o.p = x.p; if (x.pid) o.pid = x.pid; return o; });
       var hasPlan = evEdit.planDirty ? !!evEdit.plan : evEdit.hasPlan;
       if (evEdit.planDirty) {
         try {
@@ -1050,6 +1091,10 @@ window.FIREBASE_CONFIG = {
       var info = { organizer: evEdit.organizer.trim(), contact: evEdit.contact.trim(), hasPlan: hasPlan };
       if (isNew) await db.doc("events/" + id).set(Object.assign({ name: name, date: evEdit.date.trim(), zones: clean, stars: {}, pins: {}, prices: {}, types: {}, by: uid || null, ts: now, created: now }, info));
       else await db.doc("events/" + id).merge(Object.assign({ name: name, date: evEdit.date.trim(), zones: clean, by: uid || null, ts: now }, info));
+      if (oldEv) for (var oi = 0; oi < (oldEv.zones || []).length; oi++) {
+        var op = oldEv.zones[oi].pid;
+        if (op && !zones.some(function (z) { return z.pid === op; })) { try { await db.doc("plans/" + op).delete(); delete planCache[op]; } catch (e3) {} }
+      }
       /* ย้ายรายการจองและดาวตามชื่อโซนที่เปลี่ยน */
       var renames = zones.filter(function (x) { return x.orig && x.orig !== x.z; });
       for (var k = 0; k < renames.length; k++) {
@@ -1104,7 +1149,10 @@ window.FIREBASE_CONFIG = {
   }
   async function gatherPlans() {
     var out = {};
-    for (var i = 0; i < events.length; i++) { var e = events[i]; if (e.hasPlan) { var d = await loadPlan(e.id); if (d) out[e.id] = d; } }
+    for (var i = 0; i < events.length; i++) {
+      var e = events[i], ids = (e.hasPlan ? [e.id] : []).concat((e.zones || []).map(function (z) { return z.pid; }).filter(Boolean));
+      for (var j = 0; j < ids.length; j++) { var d = await loadPlan(ids[j]); if (d) out[ids[j]] = d; }
+    }
     return out;
   }
   function backupName() { var d = new Date(); return "สำรองล็อค-" + d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + ".json"; }
@@ -1189,7 +1237,7 @@ window.FIREBASE_CONFIG = {
     var okId = /^[A-Za-z0-9_\-]{1,100}$/;
     var str = function (v, n) { return typeof v === "string" ? v.slice(0, n) : ""; };
     var num = function (v) { return typeof v === "number" && isFinite(v) ? v : null; };
-    var evs = [], bks = [];
+    var evs = [], bks = [], rootPlans = (o.plans && typeof o.plans === "object") ? o.plans : {};
     o.events.forEach(function (e) {
       if (!e || !okId.test(e.id || "") || typeof e.name !== "string") return;
       var stars = {};
@@ -1201,7 +1249,7 @@ window.FIREBASE_CONFIG = {
       if (e.prices && typeof e.prices === "object") Object.keys(e.prices).forEach(function (k) { var v = e.prices[k]; if (okId.test(k) && typeof v === "number" && v >= 0 && v < 1e9) prices[k] = Math.round(v); });
       if (e.types && typeof e.types === "object") Object.keys(e.types).forEach(function (k) { var v = e.types[k]; if (okId.test(k) && (v === "a" || v === "q" || v === "")) types[k] = v; });
       var zones = (Array.isArray(e.zones) ? e.zones : []).filter(function (z) { return z && typeof z.z === "string" && Number.isInteger(z.from) && Number.isInteger(z.to) && z.to >= z.from && z.to - z.from < 300; })
-        .map(function (z) { var o = { z: z.z.slice(0, 20).replace(/\|/g, ""), from: z.from, to: z.to, t: z.t === "q" ? "q" : "a" }; if (typeof z.p === "number" && z.p > 0 && z.p < 1e9) o.p = Math.round(z.p); return o; });
+        .map(function (z) { var o = { z: z.z.slice(0, 20).replace(/\|/g, ""), from: z.from, to: z.to, t: z.t === "q" ? "q" : "a" }; if (typeof z.p === "number" && z.p > 0 && z.p < 1e9) o.p = Math.round(z.p); if (typeof z.pid === "string" && okId.test(z.pid) && typeof rootPlans[z.pid] === "string") o.pid = z.pid; return o; });
       evs.push({ id: e.id, data: { name: str(e.name, 120), date: str(e.date, 80), organizer: str(e.organizer, 120), contact: str(e.contact, 120), hasPlan: e.hasPlan === true && !!(o.plans && typeof o.plans[e.id] === "string"), zones: zones, stars: stars, pins: pins, prices: prices, types: types, by: str(e.by, 60) || null, ts: num(e.ts) || Date.now(), created: num(e.created) || num(e.ts) || Date.now() } });
     });
     o.bookings.forEach(function (b) {
