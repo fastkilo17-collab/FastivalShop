@@ -30,6 +30,7 @@
   --paid: #17703d;
   --paid-bg: #d3f0df;
   --star: #c27a00;
+  --pin: #e5173f;
   --warn-bg: #fff0cf;
   --warn-ink: #6b4300;
   --danger: #b3261e;
@@ -40,7 +41,7 @@
     --bg: #12141b; --surface: #1b1e28; --surface2: #262a37; --ink: #eceef6; --muted: #9aa2b8; --line: #333849;
     --accent: #ff6aa6; --accent-ink: #2a0618;
     --book: #ffe0a0; --book-bg: #6a5018; --dep: #c4dbff; --dep-bg: #2c5290; --paid: #aef5cc; --paid-bg: #226a44;
-    --star: #ffcf4d; --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86; --scrim: rgba(0, 0, 0, .65);
+    --star: #ffcf4d; --pin: #ff4560; --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86; --scrim: rgba(0, 0, 0, .65);
     color-scheme: dark;
   }
 }
@@ -48,7 +49,7 @@
   --bg: #12141b; --surface: #1b1e28; --surface2: #262a37; --ink: #eceef6; --muted: #9aa2b8; --line: #333849;
   --accent: #ff6aa6; --accent-ink: #2a0618;
   --book: #ffe0a0; --book-bg: #6a5018; --dep: #c4dbff; --dep-bg: #2c5290; --paid: #aef5cc; --paid-bg: #226a44;
-  --star: #ffcf4d; --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86; --scrim: rgba(0, 0, 0, .65);
+  --star: #ffcf4d; --pin: #ff4560; --warn-bg: #3a2d10; --warn-ink: #f6d58e; --danger: #ff8f86; --scrim: rgba(0, 0, 0, .65);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -95,6 +96,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips.scroll { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .chips.scroll::-webkit-scrollbar { display: none; }
+.chip.fl { min-height: 28px; padding: 0 9px; font-size: 12.5px; }
 .chip { flex: none; min-height: 30px; padding: 0 11px; border-radius: 15px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .chip.ghost { border-style: dashed; color: var(--muted); }
@@ -136,9 +138,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 .zhead .zt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin-left: auto; text-align: right; }
 .zhead .zbar { flex: none; width: 44px; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
 .zhead .zbar i { display: block; height: 100%; background: var(--accent); }
-.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 5px; }
-.cell { position: relative; min-height: 46px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 1px 2px; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); font: 300 16px/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
-.cell small { font: 500 10px/1 var(--font-body); opacity: .9; min-height: 10px; }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 5px; }
+.cell { position: relative; min-height: 60px; min-width: 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 9px 2px 3px; overflow: hidden; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); font: 300 13px/1.15 var(--font-display); font-variant-numeric: tabular-nums; }
+.cell .ct { display: block; max-width: 100%; font: 400 9.5px/1.25 var(--font-body); font-style: normal; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 12px; }
+.cell small { font: 600 10.5px/1.1 var(--font-body); opacity: 1; min-height: 11px; }
 .cell .tp, .cell .stx { position: absolute; top: 1px; font: 600 9px/1 var(--font-body); font-style: normal; }
 .cell .tp { right: 4px; opacity: .85; }
 .cell .stx { left: 4px; color: var(--star); }
@@ -202,19 +205,37 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 .opt { display: flex; flex-direction: column; align-items: flex-start; gap: 0; width: 100%; text-align: left; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 .opt b { font-weight: 600; font-size: 14px; }
 .opt span { font-size: 12px; color: var(--muted); }
-.sheet.tall { height: 92%; max-height: none; gap: 12px; }
+.sheet.tall { height: 92%; max-height: none; gap: 9px; }
+.bidchips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.bidchips button { min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); font: 600 15px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.bidchips button:active { background: var(--accent); color: var(--accent-ink); }
+.bidchips button.ghost { background: transparent; border-style: dashed; color: var(--muted); font-weight: 500; font-size: 13px; }
+.price-wrap.big input { font-size: 24px; min-height: 50px; }
+.price-wrap.sm input { min-height: 42px; font-size: 18px; }
+.evinfo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 13px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.evinfo .k { color: var(--muted); margin-right: 4px; }
+.evinfo a { color: var(--accent); }
+.planbox { display: flex; align-items: center; gap: 10px; }
+.planbox img { width: 84px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: var(--surface2); }
+.planview { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.9); display: flex; flex-direction: column; }
+.planview .pv-bar { display: flex; justify-content: flex-end; padding: 8px 12px; }
+.planview .pv-img { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; }
+.planview img { max-width: 100%; height: auto; }
+.planview img.zoom { max-width: none; width: 220%; }
 .sheet.tall .sacts { margin-top: auto; }
 .sheet.tall .price-wrap input { min-height: 42px; font-size: 18px; }
 .pinbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.pinbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.pinbtn[aria-pressed="true"] { background: var(--pin); border-color: var(--pin); color: #fff; font-weight: 600; }
+.pinbtn[aria-pressed="true"] .pn { color: #fff; }
 .seg.st button[aria-pressed="true"][data-st="free"] { background: var(--surface2); color: var(--ink); border-color: var(--muted); }
-.pn { display: inline-flex; line-height: 0; color: var(--accent); }
+.pn { display: inline-flex; line-height: 0; color: var(--pin); }
 .pn svg { display: block; }
-.cell .pn { position: absolute; right: 3px; bottom: 2px; }
-.cell.pinned { box-shadow: inset 0 0 0 2px var(--accent); }
-.cell small.st0 { opacity: .55; }
-.hot.pin .lbl { color: var(--accent); }
-.hotchip .pn { margin-right: 4px; color: var(--accent); }
+.cell .pn { position: absolute; right: 2px; bottom: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--pin); color: #fff; align-items: center; justify-content: center; box-shadow: 0 0 0 1.5px var(--surface); }
+.cell .pn svg { width: 10px; height: 10px; }
+.cell.pinned { box-shadow: inset 0 0 0 2px var(--pin); }
+.cell small.st0 { font-size: 8.5px; font-weight: 400; opacity: .6; }
+.hot.pin .lbl { color: var(--pin); }
+.hotchip .pn { margin-right: 4px; color: var(--pin); }
 .rows { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; padding: 5px 10px; border-bottom: 1px solid var(--line); cursor: pointer; }
 .row:last-child { border-bottom: 0; }
@@ -441,6 +462,16 @@ window.FIREBASE_CONFIG = {
       h("div", null, h("b", null, "฿" + fmt(sum)), h("small", null, "ยอดรวมราคาปิดประมูล")),
       h("div", null, h("b", null, priced ? "฿" + fmt(Math.round(sum / priced)) : "-"), h("small", null, "เฉลี่ยต่อล็อค"))));
 
+    if (ev.organizer || ev.contact || ev.hasPlan) {
+      var info = h("div", { class: "evinfo" });
+      if (ev.organizer) info.append(h("span", null, h("span", { class: "k" }, "ผู้จัด"), ev.organizer));
+      if (ev.contact) {
+        var tel = String(ev.contact).replace(/[^\d+]/g, "");
+        info.append(h("span", null, h("span", { class: "k" }, "ติดต่อ"), tel.length >= 9 && /^[\d\s+\-().]+$/.test(ev.contact) ? h("a", { href: "tel:" + tel }, ev.contact) : ev.contact));
+      }
+      if (ev.hasPlan) info.append(h("button", { type: "button", class: "btn small", onclick: function () { showPlan(ev.id); } }, "ดูผังภาพ"));
+      box.append(info);
+    }
     var hot = [];
     zl.forEach(function (g) { g.locks.forEach(function (l) {
       var n = starsOf(ev, g.z, l);
@@ -472,10 +503,10 @@ window.FIREBASE_CONFIG = {
       box.append(h("div", { class: "hot pin" }, h("span", { class: "lbl" }, "ปักหมุด"), pstrip));
     }
 
-    var chips = h("div", { class: "chips scroll" });
+    var chips = h("div", { class: "chips", role: "group", "aria-label": "กรองตามสถานะ" });
     [["", "ทั้งหมด"], ["free", "ว่าง"], ["book", "จอง"], ["dep", "มัดจำแล้ว"], ["paid", "จ่ายครบ"], ["hot", "★ ยอดฮิต"], ["pin", "ปักหมุด"]].forEach(function (c) {
       chips.append(h("button", {
-        type: "button", class: "chip", "data-f": c[0], "aria-pressed": String(state.fStatus === c[0]),
+        type: "button", class: "chip fl", "data-f": c[0], "aria-pressed": String(state.fStatus === c[0]),
         onclick: function () {
           state.fStatus = c[0];
           chips.querySelectorAll(".chip").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.f === state.fStatus)); });
@@ -549,13 +580,15 @@ window.FIREBASE_CONFIG = {
         if (r) { booked++; sum += Number(r.price) || 0; }
         var match = passF(r, g.z, lock) && (!q || (r ? rowMatches(r, q) : labelMatches(g.z, lock, q)));
         var t = typeOf(ev, g, r, g.z, lock);
+        var raised = !!(r && r.price != null && r.price > sp);
         var small = r && r.price != null ? short(r.price) : (sp ? short(sp) : "");
+        var ctxt = r ? (r.cat || r.product || "") : "";
         cells.append(h("button", {
           type: "button", class: "cell" + (r ? "" : " free") + (match ? "" : " dim") + (pinned ? " pinned" : ""), "data-st": r ? (r.status || "book") : null,
-          "aria-label": lockLabel(g.z, lock) + " " + TYPE[t].name + (r ? " " + (STATUS[r.status] || "") : " ว่าง") + (n ? " ดาว " + n : "") + (pinned ? " ปักหมุด" : "") + (sp ? " ราคาเริ่มต้น " + sp : ""),
+          "aria-label": lockLabel(g.z, lock) + " " + TYPE[t].name + (r ? " " + (STATUS[r.status] || "") : " ว่าง") + (n ? " ดาว " + n : "") + (pinned ? " ปักหมุด" : "") + (sp ? " ราคาเริ่มต้น " + sp : "") + (ctxt ? " " + ctxt : ""),
           title: r ? [r.name, r.product, r.price != null ? "฿" + fmt(r.price) : ""].filter(Boolean).join(" · ") : (sp ? "ว่าง · เริ่ม ฿" + fmt(sp) : "ว่าง"),
           onclick: function () { openSheet(ev.id, g.z, lock); }
-        }, padLock(lock), h("small", { class: !r && sp ? "st0" : "" }, small),
+        }, padLock(lock), h("i", { class: "ct" }, ctxt), h("small", { class: raised ? "" : "st0" }, small),
           h("i", { class: "tp" }, TYPE[t].sym), n > 0 ? h("i", { class: "stx" }, "★" + n) : null, pinned ? pinEl() : null));
       });
       var open = forceOpen || !col[g.z];
@@ -634,8 +667,12 @@ window.FIREBASE_CONFIG = {
       inp.addEventListener("input", function () { inp.value = inp.value.replace(/[^\d]/g, ""); if (onInput) onInput(); });
       return inp;
     }
-    var start = moneyIn("sh-start", "ราคาเริ่มต้น", sheet.start);
-    var price = moneyIn("sh-price", "ราคาปิดประมูล", r && r.price != null ? r.price : "", touch);
+    var start = moneyIn("sh-start", "ราคาเริ่มต้น", sheet.start, function () { syncStart(); });
+    var bid = moneyIn("sh-bid", "ราคาที่กดประมูล", r && r.price != null ? Math.max(0, r.price - (sheet.start || 0)) : "", function () { syncBid(); touch(); });
+    var price = moneyIn("sh-price", "ราคารวมปิดประมูล", r && r.price != null ? r.price : "", function () { syncTotal(); touch(); });
+    function syncBid() { var b = readPrice(bid); price.value = b == null ? "" : String((readPrice(start) || 0) + b); }
+    function syncTotal() { var t = readPrice(price); bid.value = t == null ? "" : String(Math.max(0, t - (readPrice(start) || 0))); }
+    function syncStart() { if (readPrice(bid) != null) syncBid(); else if (readPrice(price) != null) syncTotal(); }
     var product = h("input", { type: "text", id: "sh-product", placeholder: "ขายอะไร เช่น ไก่ทอด หมูปิ้ง เสื้อยืด", "aria-label": "รายละเอียดสินค้า", value: (r && r.product) || "" });
     var cname = h("input", { type: "text", id: "sh-name", placeholder: "ชื่อผู้ติดต่อ", "aria-label": "ชื่อผู้ติดต่อ", value: (r && r.name) || "" });
     var phone = h("input", { type: "tel", id: "sh-phone", inputmode: "tel", placeholder: "เบอร์โทร", "aria-label": "เบอร์โทร", value: (r && r.phone) || "" });
@@ -651,11 +688,11 @@ window.FIREBASE_CONFIG = {
       if (did) toast("เติมข้อมูลจากครั้งก่อนให้แล้ว");
     });
 
-    var catBox = h("div", { class: "chips scroll", role: "group", "aria-label": "หมวดสินค้า" });
+    var catBox = h("div", { class: "chips", role: "group", "aria-label": "หมวดสินค้า" });
     function paintCats() {
       catBox.textContent = "";
       CATS.forEach(function (c) {
-        catBox.append(h("button", { type: "button", class: "chip", "aria-pressed": String(sheet.cat === c), onclick: function () { sheet.cat = sheet.cat === c ? "" : c; paintCats(); touch(); } }, c));
+        catBox.append(h("button", { type: "button", class: "chip fl", "aria-pressed": String(sheet.cat === c), onclick: function () { sheet.cat = sheet.cat === c ? "" : c; paintCats(); touch(); } }, c));
       });
     }
     paintCats();
@@ -710,16 +747,16 @@ window.FIREBASE_CONFIG = {
         h("button", { type: "button", class: "iconbtn", disabled: !next, "aria-label": "ล็อคถัดไป", onclick: function () { openSheet(sheet.eid, sheet.zone, next); } }, "›"),
         h("button", { type: "button", class: "iconbtn", "aria-label": "ปิด", onclick: closeOverlay }, "✕")),
       h("div", { class: "row2" },
-        h("div", { class: "field" }, h("label", { class: "lbl", for: "sh-start" }, "ราคาเริ่มต้น"), h("div", { class: "price-wrap" }, h("span", null, "฿"), start)),
-        h("div", { class: "field" }, h("label", { class: "lbl", for: "sh-price" }, "ราคาปิดประมูล"), h("div", { class: "price-wrap" }, h("span", null, "฿"), price))),
-      h("div", { class: "chips" },
+        h("div", { class: "field" }, h("label", { class: "lbl", for: "sh-start" }, "ราคาเริ่มต้น"), h("div", { class: "price-wrap sm" }, h("span", null, "฿"), start)),
+        h("div", { class: "field" }, h("label", { class: "lbl", for: "sh-bid" }, "ราคาที่กดประมูล (บวกเพิ่ม)"), h("div", { class: "price-wrap sm" }, h("span", null, "+"), bid))),
+      h("div", { class: "bidchips" },
         [100, 500, 1000].map(function (n) {
-          return h("button", { type: "button", class: "chip", onclick: function () {
-            var base = readPrice(price) != null ? readPrice(price) : (readPrice(start) || 0);
-            price.value = String(base + n); touch();
+          return h("button", { type: "button", "aria-label": "บวกราคาประมูล " + fmt(n), onclick: function () {
+            bid.value = String((readPrice(bid) || 0) + n); syncBid(); touch();
           } }, "+" + fmt(n));
         }),
-        h("button", { type: "button", class: "chip ghost", onclick: function () { price.value = ""; } }, "ล้างราคาปิด")),
+        h("button", { type: "button", class: "ghost", onclick: function () { bid.value = ""; price.value = ""; } }, "ล้าง")),
+      h("div", { class: "field" }, h("label", { class: "lbl", for: "sh-price" }, "ราคารวมปิดประมูล (เริ่มต้น + ที่กดประมูล)"), h("div", { class: "price-wrap big" }, h("span", null, "฿"), price)),
       tyBox,
       h("div", { class: "two" }, pinBtn, starBox),
       stBox,
@@ -732,7 +769,7 @@ window.FIREBASE_CONFIG = {
     form.addEventListener("submit", function (e) { e.preventDefault(); saveSheet(); });
     ov.append(form);
     if (state.ro) { $("#sh-save").disabled = true; }
-    if (!r && window.innerHeight > 600) setTimeout(function () { price.focus(); }, 30);
+    if (!r && window.innerHeight > 600) setTimeout(function () { bid.focus(); }, 30);
   }
 
   /* ดาว ปักหมุด ราคาเริ่มต้น และประเภทล็อค เป็นข้อมูลของตัวล็อค เก็บเมื่อกดบันทึกเท่านั้น */
@@ -772,10 +809,48 @@ window.FIREBASE_CONFIG = {
     } finally { state.busy = false; }
   }
 
+  /* ---------- รูปผังล็อค (เก็บแยกคอลเลกชัน plans เพื่อไม่ให้เอกสารงานใหญ่) ---------- */
+  var planCache = {};
+  async function loadPlan(eid) {
+    if (planCache[eid] !== undefined) return planCache[eid];
+    try { var x = await db.doc("plans/" + eid).get(); planCache[eid] = x.exists && x.data && x.data.img ? String(x.data.img) : ""; }
+    catch (e) { return null; }
+    return planCache[eid];
+  }
+  function compressImage(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        URL.revokeObjectURL(url);
+        var max = 1400, q = 0.8, out = "";
+        for (var tries = 0; tries < 6; tries++) {
+          var sc = Math.min(1, max / Math.max(im.width, im.height)), cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(im.width * sc)); cv.height = Math.max(1, Math.round(im.height * sc));
+          var cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height);
+          out = cv.toDataURL("image/jpeg", q);
+          if (out.length <= 230000) return res(out);
+          max = Math.round(max * 0.8); q = Math.max(0.5, q - 0.08);
+        }
+        rej(new Error("big"));
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); rej(new Error("bad")); };
+      im.src = url;
+    });
+  }
+  function showPlan(eid) {
+    var wrap = h("div", { class: "planview", role: "dialog", "aria-modal": "true", "aria-label": "ผังล็อค" });
+    var img = h("img", { alt: "ผังล็อค" });
+    img.addEventListener("click", function () { img.classList.toggle("zoom"); });
+    wrap.append(h("div", { class: "pv-bar" }, h("button", { type: "button", class: "btn small", onclick: function () { wrap.remove(); } }, "ปิด ✕")),
+      h("div", { class: "pv-img" }, img));
+    document.body.append(wrap);
+    loadPlan(eid).then(function (d) { if (d) img.src = d; else { wrap.remove(); toast(d === null ? "โหลดรูปไม่ได้" : "ยังไม่มีรูปผัง", "err"); } });
+  }
+
   /* ---------- สร้าง / แก้ไขงาน ---------- */
   function openEventEditor(ev) {
     evEdit = {
-      id: ev ? ev.id : null, created: ev && ev.created, name: ev ? ev.name : "", date: ev ? (ev.date || "") : "",
+      id: ev ? ev.id : null, created: ev && ev.created, name: ev ? ev.name : "", date: ev ? (ev.date || "") : "", organizer: ev ? (ev.organizer || "") : "", contact: ev ? (ev.contact || "") : "", hasPlan: !!(ev && ev.hasPlan), plan: undefined, planDirty: false,
       zones: ev ? (ev.zones || []).map(function (z) { return { z: z.z, from: z.from, to: z.to, t: z.t || "a", p: z.p || 0, orig: z.z }; }) : [],
       gen: { prefix: "", style: "letter", start: "A", count: "4", n: "40", t: "a", p: "" }
     };
@@ -803,6 +878,30 @@ window.FIREBASE_CONFIG = {
     var dateIn = h("input", { type: "text", id: "ev-date", value: evEdit.date, placeholder: "วันที่จัดงาน (ไม่บังคับ) เช่น 25–27 ธ.ค. 2569", "aria-label": "วันที่จัดงาน" });
     dateIn.addEventListener("input", function () { evEdit.date = dateIn.value; });
 
+    var orgIn = h("input", { type: "text", id: "ev-org", value: evEdit.organizer, maxlength: "120", placeholder: "ผู้จัดงาน", "aria-label": "ผู้จัดงาน" });
+    orgIn.addEventListener("input", function () { evEdit.organizer = orgIn.value; });
+    var conIn = h("input", { type: "text", id: "ev-contact", value: evEdit.contact, maxlength: "120", placeholder: "ติดต่อ เช่น เบอร์โทร หรือ LINE", "aria-label": "ติดต่อผู้จัด" });
+    conIn.addEventListener("input", function () { evEdit.contact = conIn.value; });
+    var planBox = h("div", { class: "planbox" });
+    var planFile = h("input", { type: "file", accept: "image/*", hidden: true, id: "ev-planfile", "aria-label": "เลือกรูปผังล็อค" });
+    function paintPlan() {
+      planBox.textContent = "";
+      var has = evEdit.plan ? true : (evEdit.plan === undefined && evEdit.hasPlan);
+      if (has) {
+        var im = h("img", { alt: "ผังล็อค" });
+        if (evEdit.plan) im.src = evEdit.plan; else loadPlan(evEdit.id).then(function (d) { if (d) { im.src = d; } });
+        planBox.append(im);
+      }
+      planBox.append(h("button", { type: "button", class: "btn small", onclick: function () { planFile.click(); } }, has ? "เปลี่ยนรูปผัง" : "เลือกรูปผังล็อค"));
+      if (has) planBox.append(h("button", { type: "button", class: "btn small danger", onclick: function () { evEdit.plan = ""; evEdit.planDirty = true; paintPlan(); } }, "เอาออก"));
+    }
+    planFile.addEventListener("change", async function () {
+      var f = planFile.files && planFile.files[0]; if (!f) return;
+      try { evEdit.plan = await compressImage(f); evEdit.planDirty = true; paintPlan(); }
+      catch (e) { toast("ใช้รูปนี้ไม่ได้ ลองรูปอื่น", "err"); }
+      planFile.value = "";
+    });
+    paintPlan();
     var rowsBox = h("div", { class: "stack", style: "gap:6px", id: "zrows" });
     function paintRows() {
       rowsBox.textContent = "";
@@ -894,6 +993,7 @@ window.FIREBASE_CONFIG = {
           var rs = (rowsByEvent[id] || []).slice();
           for (var i = 0; i < rs.length; i++) await db.doc("bookings/" + rs[i].id).delete();
           await db.doc("events/" + id).delete();
+          try { await db.doc("plans/" + id).delete(); delete planCache[id]; } catch (pe) {}
           toast("ลบงานแล้ว"); closeOverlay(); go("events");
         } catch (e) { toast("ลบไม่สำเร็จ", "err"); }
       }
@@ -902,7 +1002,8 @@ window.FIREBASE_CONFIG = {
     var panel = h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-label": "ตั้งค่างาน" },
       h("div", { class: "shead" }, h("div", { class: "ttl", style: "text-align:left" }, evEdit.id ? "แก้ไขงาน" : "งานใหม่"),
         h("button", { type: "button", class: "iconbtn", "aria-label": "ปิด", onclick: closeOverlay }, "✕")),
-      nameIn, dateIn,
+      nameIn, dateIn, orgIn, conIn,
+      h("div", { class: "field" }, h("span", { class: "lbl" }, "รูปผังล็อค (ไม่บังคับ)"), planBox, planFile),
       h("div", { class: "field" }, h("span", { class: "lbl" }, "สร้างโซนต่อเนื่อง (เพิ่มต่อจากที่มี ไม่ทับโซนเดิม)"), genBox),
       h("div", { class: "field" },
         h("div", { class: "bar" }, h("span", { class: "lbl" }, "โซนและเลขล็อค"),
@@ -935,8 +1036,20 @@ window.FIREBASE_CONFIG = {
     var clean = zones.map(function (x) { var o = { z: x.z, from: x.from, to: x.to, t: x.t }; if (x.p > 0) o.p = x.p; return o; });
     state.busy = true; $("#ev-save").disabled = true;
     try {
-      if (isNew) await db.doc("events/" + id).set({ name: name, date: evEdit.date.trim(), zones: clean, stars: {}, pins: {}, prices: {}, types: {}, by: uid || null, ts: now, created: now });
-      else await db.doc("events/" + id).merge({ name: name, date: evEdit.date.trim(), zones: clean, by: uid || null, ts: now });
+      var hasPlan = evEdit.planDirty ? !!evEdit.plan : evEdit.hasPlan;
+      if (evEdit.planDirty) {
+        try {
+          if (evEdit.plan) await db.doc("plans/" + id).set({ eid: id, img: evEdit.plan, by: uid || null, ts: now });
+          else await db.doc("plans/" + id).delete();
+          planCache[id] = evEdit.plan || "";
+        } catch (pe) {
+          toast(pe && pe.code === "permission-denied" ? "เก็บรูปผังไม่ได้ ต้องเพิ่มกฎ plans ใน Firestore Rules (ดู firestore.rules)" : "เก็บรูปผังไม่สำเร็จ", "err");
+          var bb = $("#ev-save"); if (bb) bb.disabled = false; state.busy = false; return;
+        }
+      }
+      var info = { organizer: evEdit.organizer.trim(), contact: evEdit.contact.trim(), hasPlan: hasPlan };
+      if (isNew) await db.doc("events/" + id).set(Object.assign({ name: name, date: evEdit.date.trim(), zones: clean, stars: {}, pins: {}, prices: {}, types: {}, by: uid || null, ts: now, created: now }, info));
+      else await db.doc("events/" + id).merge(Object.assign({ name: name, date: evEdit.date.trim(), zones: clean, by: uid || null, ts: now }, info));
       /* ย้ายรายการจองและดาวตามชื่อโซนที่เปลี่ยน */
       var renames = zones.filter(function (x) { return x.orig && x.orig !== x.z; });
       for (var k = 0; k < renames.length; k++) {
@@ -984,8 +1097,15 @@ window.FIREBASE_CONFIG = {
   }
 
   /* ---------- สำรอง / กู้คืน ---------- */
-  function buildBackup() {
-    return { app: "lockbook", version: 2, exportedAt: Date.now(), events: events.map(function (e) { return Object.assign({}, e); }), bookings: rows.map(function (r) { return Object.assign({}, r); }) };
+  function buildBackup(plans) {
+    var o = { app: "lockbook", version: 3, exportedAt: Date.now(), events: events.map(function (e) { return Object.assign({}, e); }), bookings: rows.map(function (r) { return Object.assign({}, r); }) };
+    if (plans) o.plans = plans;
+    return o;
+  }
+  async function gatherPlans() {
+    var out = {};
+    for (var i = 0; i < events.length; i++) { var e = events[i]; if (e.hasPlan) { var d = await loadPlan(e.id); if (d) out[e.id] = d; } }
+    return out;
   }
   function backupName() { var d = new Date(); return "สำรองล็อค-" + d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + ".json"; }
   function markBackup() { store.set("lastBackup", Date.now()); }
@@ -998,7 +1118,7 @@ window.FIREBASE_CONFIG = {
   function canPick() { return !env.claude && typeof window.showSaveFilePicker === "function"; }
 
   async function backupSaveFile() {
-    var text = JSON.stringify(buildBackup()), fn = backupName();
+    var text = JSON.stringify(buildBackup(await gatherPlans())), fn = backupName();
     try {
       if (canPick()) {
         try {
@@ -1013,7 +1133,7 @@ window.FIREBASE_CONFIG = {
     } catch (e) { if (!(e && e.code === "declined")) toast("สำรองไม่สำเร็จ", "err"); }
   }
   async function backupShare() {
-    var text = JSON.stringify(buildBackup());
+    var text = JSON.stringify(buildBackup(await gatherPlans()));
     try {
       var file = new File([text], backupName(), { type: "application/json" });
       await navigator.share({ files: [file], title: "สำรองข้อมูลสมุดจองล็อค" });
@@ -1082,7 +1202,7 @@ window.FIREBASE_CONFIG = {
       if (e.types && typeof e.types === "object") Object.keys(e.types).forEach(function (k) { var v = e.types[k]; if (okId.test(k) && (v === "a" || v === "q" || v === "")) types[k] = v; });
       var zones = (Array.isArray(e.zones) ? e.zones : []).filter(function (z) { return z && typeof z.z === "string" && Number.isInteger(z.from) && Number.isInteger(z.to) && z.to >= z.from && z.to - z.from < 300; })
         .map(function (z) { var o = { z: z.z.slice(0, 20).replace(/\|/g, ""), from: z.from, to: z.to, t: z.t === "q" ? "q" : "a" }; if (typeof z.p === "number" && z.p > 0 && z.p < 1e9) o.p = Math.round(z.p); return o; });
-      evs.push({ id: e.id, data: { name: str(e.name, 120), date: str(e.date, 80), zones: zones, stars: stars, pins: pins, prices: prices, types: types, by: str(e.by, 60) || null, ts: num(e.ts) || Date.now(), created: num(e.created) || num(e.ts) || Date.now() } });
+      evs.push({ id: e.id, data: { name: str(e.name, 120), date: str(e.date, 80), organizer: str(e.organizer, 120), contact: str(e.contact, 120), hasPlan: e.hasPlan === true && !!(o.plans && typeof o.plans[e.id] === "string"), zones: zones, stars: stars, pins: pins, prices: prices, types: types, by: str(e.by, 60) || null, ts: num(e.ts) || Date.now(), created: num(e.created) || num(e.ts) || Date.now() } });
     });
     o.bookings.forEach(function (b) {
       if (!b || !okId.test(b.id || "") || typeof b.eid !== "string" || typeof b.zone !== "string" || typeof b.lock !== "string") return;
@@ -1092,8 +1212,12 @@ window.FIREBASE_CONFIG = {
         by: str(b.by, 60) || null, ts: num(b.ts) || Date.now(), created: num(b.created) || num(b.ts) || Date.now()
       } });
     });
+    var pls = [];
+    if (o.plans && typeof o.plans === "object") Object.keys(o.plans).forEach(function (k) {
+      var v = o.plans[k]; if (okId.test(k) && typeof v === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v) && v.length < 250000) pls.push({ id: k, data: { eid: k, img: v, by: null, ts: Date.now() } });
+    });
     if (!evs.length && !bks.length) throw "ไม่พบข้อมูลในไฟล์สำรอง";
-    return { events: evs, bookings: bks, exportedAt: num(o.exportedAt) };
+    return { events: evs, bookings: bks, plans: pls, exportedAt: num(o.exportedAt) };
   }
   function previewRestore(txt) {
     var p;
@@ -1104,7 +1228,7 @@ window.FIREBASE_CONFIG = {
     ov.append(h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-label": "ยืนยันการกู้คืน" },
       h("div", { class: "shead" }, h("div", { class: "ttl", style: "text-align:left" }, "ยืนยันการกู้คืน"),
         h("button", { type: "button", class: "iconbtn", "aria-label": "ปิด", onclick: closeOverlay }, "✕")),
-      h("p", null, "พบ " + p.events.length + " งาน และ " + p.bookings.length + " รายการจอง" + (p.exportedAt ? " (สำรองเมื่อ " + new Date(p.exportedAt).toLocaleString("th-TH") + ")" : "")),
+      h("p", null, "พบ " + p.events.length + " งาน และ " + p.bookings.length + " รายการจอง" + ((p.plans || []).length ? " และรูปผัง " + p.plans.length + " รูป" : "") + (p.exportedAt ? " (สำรองเมื่อ " + new Date(p.exportedAt).toLocaleString("th-TH") + ")" : "")),
       h("p", { class: "sub" }, "ข้อมูลที่รหัสตรงกันจะถูกแทนที่ด้วยข้อมูลในไฟล์ ข้อมูลอื่นที่มีอยู่ตอนนี้จะไม่ถูกลบ"),
       prog,
       h("div", { class: "sacts" }, go1, h("button", { type: "button", class: "btn", onclick: showBackup }, "ยกเลิก"))));
@@ -1115,6 +1239,7 @@ window.FIREBASE_CONFIG = {
     var items = [];
     p.events.forEach(function (e) { items.push(["events/" + e.id, e.data]); });
     p.bookings.forEach(function (b) { items.push(["bookings/" + b.id, b.data]); });
+    (p.plans || []).forEach(function (x) { items.push(["plans/" + x.id, x.data]); delete planCache[x.id]; });
     var done = 0, fail = 0;
     for (var i = 0; i < items.length; i += 4) {
       await Promise.all(items.slice(i, i + 4).map(function (it) {
@@ -1195,7 +1320,8 @@ window.FIREBASE_CONFIG = {
           set: function (d) { return r.set(d); },
           update: function (d) { return r.update(d); },
           merge: function (d) { return r.set(d, { merge: true }); },
-          delete: function () { return r.delete(); }
+          delete: function () { return r.delete(); },
+          get: function () { return r.get().then(function (x) { return { exists: x.exists, data: x.exists ? x.data() : null }; }); }
         };
       }
     };
@@ -1205,7 +1331,8 @@ window.FIREBASE_CONFIG = {
       collection: function (p) { return raw.collection(p); },
       doc: function (p) {
         var d = raw.doc(p);
-        return { set: function (x) { return d.set(x); }, update: function (x) { return d.update(x); }, merge: function (x) { return d.update(x); }, delete: function () { return d.delete(); } };
+        return { set: function (x) { return d.set(x); }, update: function (x) { return d.update(x); }, merge: function (x) { return d.update(x); }, delete: function () { return d.delete(); },
+          get: function () { return d.get().then(function (x) { return { exists: !!x.exists, data: x.exists ? x.data() : null }; }); } };
       }
     };
   }
@@ -1228,7 +1355,8 @@ window.FIREBASE_CONFIG = {
           set: async function (d) { var o = load(c); o[id] = JSON.parse(JSON.stringify(d)); put(c, o); emit(c); },
           update: async function (d) { m(d); },
           merge: async function (d) { m(d); },
-          delete: async function () { var o = load(c); delete o[id]; put(c, o); emit(c); }
+          delete: async function () { var o = load(c); delete o[id]; put(c, o); emit(c); },
+          get: async function () { var o = load(c); return { exists: !!o[id], data: o[id] || null }; }
         };
       }
     };
